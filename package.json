@@ -1,7 +1,7 @@
 {
-  "name": "nfold",
+  "name": "week3js",
   "version": "1.0.0",
-  "description": "",
+  "description": "week 3 js assingments",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
