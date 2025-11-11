@@ -1,0 +1,80 @@
+# Get all cats
+GET http://127.0.0.1:3000/api/v1/cats
+Accept: application/json
+
+###
+
+# Get cat by ID
+GET http://127.0.0.1:3000/api/v1/cats/9592
+Accept: application/json
+
+###
+
+# Add a new cat
+POST http://127.0.0.1:3000/api/v1/cats
+Content-Type: application/json
+
+{
+  "cat_name": "Whiskers",
+  "weight": 10,
+  "owner": 3601,
+  "filename": "abc123",
+  "birthdate": "2022-01-01"
+}
+
+###
+
+# Update a cat
+PUT http://127.0.0.1:3000/api/v1/cats/9592
+Content-Type: application/json
+
+{
+  "cat_name": "Updated Name"
+}
+
+###
+
+# Delete a cat
+DELETE http://127.0.0.1:3000/api/v1/cats/9592
+
+### Users API Tests
+
+# Get all users
+GET http://127.0.0.1:3000/api/v1/users
+Accept: application/json
+
+###
+
+# Get user by ID
+GET http://127.0.0.1:3000/api/v1/users/3609
+Accept: application/json
+
+###
+
+# Add a new user
+POST http://127.0.0.1:3000/api/v1/users
+Content-Type: application/json
+
+{
+  "name": "Bob Marley",
+  "username": "bobm",
+  "email": "bob@metropolia.fi",
+  "role": "user",
+  "password": "bobpass"
+}
+
+###
+
+# Update a user (hard-coded response)
+PUT http://127.0.0.1:3000/api/v1/users/3609
+Content-Type: application/json
+
+{
+  "name": "John Updated",
+  "email": "john.new@metropolia.fi"
+}
+
+###
+
+# Delete a user (hard-coded response)
+DELETE http://127.0.0.1:3000/api/v1/users/3609
