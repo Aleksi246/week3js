@@ -10,6 +10,7 @@ import {
   putCat,
   deleteCat,
 } from '../controllers/cat-controller.js';
+import {createThumbnail} from '../../middlewares/upload.js';
 
 const catRouter = express.Router();
 
@@ -25,7 +26,11 @@ const upload = multer({dest: uploadsDir});
 
 // multer will parse multipart/form-data and populate req.file for single file uploads
 // the form field name expected by multer is 'file' (change here if you use another name)
-catRouter.route('/').get(getCat).post(upload.single('file'), postCat);
+// route: upload file, then create thumbnail, then handle postCat
+catRouter
+  .route('/')
+  .get(getCat)
+  .post(upload.single('file'), createThumbnail, postCat);
 
 catRouter.route('/:id').get(getCatById).put(putCat).delete(deleteCat);
 
