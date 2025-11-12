@@ -20,8 +20,21 @@ const getCatById = (req, res) => {
 };
 
 const postCat = (req, res) => {
-  const result = addCat(req.body);
+  // Debug: print content-type and incoming file/body to diagnose multer issues
+  console.log('--- POST /cats incoming ---');
+  console.log('content-type:', req.headers['content-type']);
+  console.log('req.file (multer):', req.file);
+  console.log('req.body:', req.body);
+
+  const catData = {
+    ...req.body,
+    filename: req.file ? req.file.filename : null,
+  };
+
+  const result = addCat(catData);
   if (result.cat_id) {
+    console.log(req.body);
+    console.log(req.file);
     res.status(201);
     res.json({message: 'New cat added.', result});
   } else {
