@@ -1,75 +1,82 @@
-const userItems = [
-  {
-    user_id: 3609,
-    name: 'John Doe',
-    username: 'johndoe',
-    email: 'john@metropolia.fi',
-    role: 'user',
-    password: 'password123',
-  },
-  {
-    user_id: 3610,
-    name: 'Jane Smith',
-    username: 'janesmith',
-    email: 'jane@metropolia.fi',
-    role: 'admin',
-    password: 'securepass',
-  },
-  {
-    user_id: 3611,
-    name: 'Alice Johnson',
-    username: 'alicej',
-    email: 'alice@metropolia.fi',
-    role: 'user',
-    password: 'alicepass',
-  },
-];
+import promisePool from '../../utils/database.js';
 
-const listAllUsers = () => {
-  return userItems;
+const listAllUsers = async () => {
+  const [rows] = await promisePool.query('SELECT * FROM wsk_users');
+  return rows;
 };
 
-const findUserById = (id) => {
-  return userItems.find((item) => item.user_id == id);
+const findUserById = async (id) => {
+  const [rows] = await promisePool.execute(
+    'SELECT * FROM wsk_users WHERE user_id = ?',
+    [id]
+  );
+  if (rows.length === 0) return null;
+  return rows[0];
 };
 
-const addUser = (user) => {
+const addUser = async (user) => {
   const {name, username, email, role, password} = user;
-  const newId = userItems[0].user_id + 1;
-  userItems.unshift({
-    user_id: newId,
+  const sql = `INSERT INTO wsk_users (name, username, email, role, password) VALUES (?, ?, ?, ?, ?)`;
+  const [result] = await promisePool.execute(sql, [
     name,
     username,
     email,
     role,
     password,
-  });
-  return {user_id: newId};
+  ]);
+  return {user_id: result.insertId};
 };
 
-const updateUser = (id, user) => {
-  const index = userItems.findIndex((item) => item.user_id == id);
-  if (index === -1) return null; // user not found
+const updateUser = async (id, user) => {
+  // Fetch existing user to preserve fields not included in the request
+  const existing = await findUserById(id);
+  if (!existing) return null;
 
+  // Only update fields that are provided in the request (not undefined)
   const {name, username, email, role, password} = user;
-  userItems[index] = {
-    ...userItems[index],
-    name,
-    username,
-    email,
-    role,
-    password,
+
+  const updateData = {
+    name: name !== undefined ? name : existing.name,
+    username: username !== undefined ? username : existing.username,
+    email: email !== undefined ? email : existing.email,
+    role: role !== undefined ? role : existing.role,
+    password: password !== undefined ? password : existing.password,
   };
-  return userItems[index];
+
+  const sql = `UPDATE wsk_users SET name = ?, username = ?, email = ?, role = ?, password = ? WHERE user_id = ?`;
+  const [result] = await promisePool.execute(sql, [
+    updateData.name,
+    updateData.username,
+    updateData.email,
+    updateData.role,
+    updateData.password,
+    id,
+  ]);
+
+  if (result.affectedRows === 0) return null;
+  return findUserById(id);
 };
 
-const deleteUser = (id) => {
-  const index = userItems.findIndex((item) => item.user_id == id);
-  if (index === -1) return null;
-
-  const deletedUser = userItems.splice(index, 1)[0];
-
-  return deletedUser;
+// Delete user and their cats in a transaction to maintain referential integrity
+const deleteUser = async (id) => {
+  const conn = await promisePool.getConnection();
+  try {
+    await conn.beginTransaction();
+    // delete cats owned by user
+    await conn.execute('DELETE FROM wsk_cats WHERE owner = ?', [id]);
+    const [result] = await conn.execute(
+      'DELETE FROM wsk_users WHERE user_id = ?',
+      [id]
+    );
+    await conn.commit();
+    conn.release();
+    if (result.affectedRows === 0) return null;
+    return {user_id: id};
+  } catch (err) {
+    await conn.rollback();
+    conn.release();
+    throw err;
+  }
 };
 
 export {listAllUsers, findUserById, addUser, updateUser, deleteUser};

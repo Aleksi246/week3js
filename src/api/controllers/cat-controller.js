@@ -2,70 +2,93 @@ import {
   addCat,
   findCatById,
   listAllCats,
-  updateCat,
-  deleteCat1,
+  modifyCat,
+  removeCat,
+  listCatsByUser,
 } from '../models/cat-model.js';
 
-const getCat = (req, res) => {
-  res.json(listAllCats());
-};
-
-const getCatById = (req, res) => {
-  const cat = findCatById(req.params.id);
-  if (cat) {
-    res.json(cat);
-  } else {
-    res.sendStatus(404);
+const getCat = async (req, res, next) => {
+  try {
+    const rows = await listAllCats();
+    res.json(rows);
+  } catch (err) {
+    next(err);
   }
 };
 
-const postCat = (req, res) => {
-  // Debug: print content-type and incoming file/body to diagnose multer issues
-  console.log('--- POST /cats incoming ---');
-  console.log('content-type:', req.headers['content-type']);
-  console.log('req.file (multer):', req.file);
-  console.log('req.body:', req.body);
-
-  const catData = {
-    ...req.body,
-    filename: req.file ? req.file.filename : null,
-  };
-
-  const result = addCat(catData);
-  if (result.cat_id) {
-    console.log(req.body);
-    console.log(req.file);
-    res.status(201);
-    res.json({message: 'New cat added.', result});
-  } else {
-    res.sendStatus(400);
+const getCatById = async (req, res, next) => {
+  try {
+    const cat = await findCatById(req.params.id);
+    if (cat) {
+      res.json(cat);
+    } else {
+      res.sendStatus(404);
+    }
+  } catch (err) {
+    next(err);
   }
 };
 
-const putCat = (req, res) => {
-  const id = req.params.id;
-  const updatedCat = req.body;
-  // not implemented in this example, this is homework
-  const result = updateCat(id, updatedCat);
-  if (result) {
-    res.status(200);
-    res.json({message: 'Cat item updated.'});
-  } else {
-    res.sendStatus(404);
+const postCat = async (req, res, next) => {
+  try {
+    console.log('--- POST /cats incoming ---');
+    console.log('content-type:', req.headers['content-type']);
+    console.log('req.file (multer):', req.file);
+    console.log('req.body:', req.body);
+
+    const catData = {
+      ...req.body,
+      filename: req.file ? req.file.filename : '',
+    };
+
+    const result = await addCat(catData);
+    if (result && result.cat_id) {
+      res.status(201).json({message: 'New cat added.', result});
+    } else {
+      res.sendStatus(400);
+    }
+  } catch (err) {
+    next(err);
   }
 };
 
-const deleteCat = (req, res) => {
-  const id = req.params.id;
-
-  // not implemented in this example, this is homework
-  const result = deleteCat1(id);
-  if (result) {
-    res.status(200);
-    res.json({message: 'Cat item deleted.'});
-  } else {
-    res.sendStatus(404);
+const putCat = async (req, res, next) => {
+  try {
+    const id = req.params.id;
+    const updatedCat = req.body;
+    const result = await modifyCat(updatedCat, id);
+    if (result) {
+      res.status(200).json({message: 'Cat item updated.'});
+    } else {
+      res.sendStatus(404);
+    }
+  } catch (err) {
+    next(err);
   }
 };
 
-export {getCat, getCatById, postCat, putCat, deleteCat};
+const deleteCat = async (req, res, next) => {
+  try {
+    const id = req.params.id;
+    const result = await removeCat(id);
+    if (result) {
+      res.status(200).json({message: 'Cat item deleted.'});
+    } else {
+      res.sendStatus(404);
+    }
+  } catch (err) {
+    next(err);
+  }
+};
+
+const getCatsByUser = async (req, res, next) => {
+  try {
+    const userId = req.params.id;
+    const rows = await listCatsByUser(userId);
+    res.json(rows);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export {getCat, getCatById, postCat, putCat, deleteCat, getCatsByUser};
